@@ -1,0 +1,136 @@
+import tkinter as tk
+from tkinter import scrolledtext
+import builtins
+
+import Ayson_Python_beginner_assessment  # this is your big 417-line file
+
+
+# ---------- GUI SETUP ----------
+
+root = tk.Tk()
+root.title("🐍 Python Assessments - UI Mode")
+root.geometry("900x600")
+root.configure(bg="#1e1e1e")
+
+# Title label
+title_label = tk.Label(
+    root,
+    text="🐍 Python Assessments",
+    font=("Segoe UI", 18, "bold"),
+    fg="#ffffff",
+    bg="#1e1e1e"
+)
+title_label.pack(pady=(10, 5))
+
+# Output console
+output_box = scrolledtext.ScrolledText(
+    root,
+    width=100,
+    height=25,
+    bg="#111111",
+    fg="#f5f5f5",
+    insertbackground="#ffffff",
+    font=("Consolas", 10)
+)
+output_box.pack(padx=10, pady=10, fill="both", expand=True)
+
+# Input area at bottom
+input_frame = tk.Frame(root, bg="#1e1e1e")
+input_frame.pack(fill="x", padx=10, pady=(0, 10))
+
+input_label = tk.Label(
+    input_frame,
+    text="👉 Input:",
+    font=("Segoe UI", 10, "bold"),
+    fg="#ffffff",
+    bg="#1e1e1e"
+)
+input_label.pack(side="left")
+
+input_var = tk.StringVar()
+
+input_entry = tk.Entry(
+    input_frame,
+    textvariable=input_var,
+    width=60,
+    font=("Consolas", 10)
+)
+input_entry.pack(side="left", padx=8)
+
+# This StringVar will be used to "return" values to input()
+_wait_var = tk.StringVar()
+
+
+def on_submit():
+    """Called when the user clicks the Submit button or presses Enter."""
+    text = input_entry.get()
+    input_entry.delete(0, tk.END)
+    # set the wait var so gui_input() can continue
+    _wait_var.set(text)
+
+
+submit_button = tk.Button(
+    input_frame,
+    text="Submit",
+    command=on_submit
+)
+submit_button.pack(side="left")
+
+
+def on_enter(event):
+    on_submit()
+
+
+input_entry.bind("<Return>", on_enter)
+
+
+# ---------- OVERRIDE print() AND input() ----------
+
+def gui_print(*args, **kwargs):
+    """Replacement for print() that writes into the text box."""
+    text = " ".join(str(a) for a in args)
+    output_box.insert(tk.END, text + "\n")
+    output_box.see(tk.END)  # auto-scroll
+
+
+def gui_input(prompt=""):
+    """
+    Replacement for input() that:
+    - shows the prompt in the output box
+    - waits for the user to type in the Entry and press Submit/Enter
+    """
+    # show the prompt
+    if prompt:
+        gui_print(prompt)
+
+    # reset wait var and focus input
+    _wait_var.set("")
+    input_entry.focus_set()
+
+    # wait until on_submit() sets _wait_var
+    root.wait_variable(_wait_var)
+
+    answer = _wait_var.get()
+
+    # echo the answer in the console-style output
+    if answer != "":
+        gui_print(">> " + answer)
+
+    return answer
+
+
+# Monkey-patch builtins
+builtins.print = gui_print
+builtins.input = gui_input
+
+
+# ---------- START YOUR ORIGINAL PROGRAM ----------
+
+def start_program():
+    # This calls your Main_of_all() from assessment.py
+    Ayson_Python_beginner_assessment.Main_of_all()
+
+
+root.after(100, start_program)
+
+root.mainloop()
